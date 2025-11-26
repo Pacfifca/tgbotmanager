@@ -30,7 +30,7 @@ private final TelegramClient telegramClient;
         );
         var chatId = update.getMessage().getChatId();
         SendMessage message = SendMessage.builder()
-                .text("привет. твоя мама :" + update.getMessage().getText())
+                .text("привет, твоя мама " + update.getMessage().getText())
                 .chatId(chatId)
                 .build();
         try {
