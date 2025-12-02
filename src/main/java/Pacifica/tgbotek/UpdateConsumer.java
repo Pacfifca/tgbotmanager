@@ -8,12 +8,17 @@ import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Component
 public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
@@ -33,13 +38,33 @@ private final TelegramClient telegramClient;
             String messageText = update.getMessage().getText();
             Long chatId = update.getMessage().getChatId();
 
-            if (messageText.equals("/start")){
+            if (messageText.equals("/start") || messageText.equals("начать")) {
                 sendMainMenu(chatId);
             } else {
-                sendMessage(chatId,"Не понял");
+                sendMessage(chatId,"Не понял, напиши начать");
+                sendReplyKeyboard(chatId);
             }
         } else if (update.hasCallbackQuery()){
             handleCallbackQuery(update.getCallbackQuery());
+        }
+    }
+
+    private void sendReplyKeyboard(Long chatId) {
+        SendMessage message = SendMessage.builder()
+                .chatId(chatId)
+                .build();
+
+        List<KeyboardRow> keyboardRows = new ArrayList<>();
+        KeyboardRow row1 = new KeyboardRow ("начать");
+        keyboardRows.add(row1);
+
+        ReplyKeyboardMarkup markup = new ReplyKeyboardMarkup(keyboardRows);
+        message.setReplyMarkup(markup);
+
+        try {
+            telegramClient.execute(message);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -49,7 +74,7 @@ private final TelegramClient telegramClient;
         var user = callbackQuery.getFrom();
         switch(data){
             case "my_name" -> sendMyName(chatId, user);
-            case "showEmployeeList" -> sendEmployeesList(chatId);
+            case "showEmployeeLst" -> sendEmployeesList(chatId);
             case "showTasksList" -> sendTaskList(chatId);
             case "getFilesList" -> sendFilesList(chatId);
             default -> sendMessage(chatId, "Неизвестная комманда");
@@ -76,6 +101,7 @@ private final TelegramClient telegramClient;
     private void sendFilesList(Long chatId) {
         sendMessage(chatId, "присылаю список файлов...");
 
+
     }
 
     private void sendTaskList(Long chatId) {
@@ -89,7 +115,12 @@ private final TelegramClient telegramClient;
     }
 
     private void sendMyName(Long chatId, User user) {
-
+        var text = "ПРОФИЛЬ:\n\nВаше имя: %s\nВаш ник: @%s"
+                .formatted(
+                        user.getFirstName()+ " " + user.getLastName(),
+                        user.getUserName()
+                );
+        sendMessage(chatId, text);
     }
 
     private void sendMainMenu(Long chatId) {
