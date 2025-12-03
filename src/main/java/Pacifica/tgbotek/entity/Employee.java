@@ -1,24 +1,19 @@
 package Pacifica.tgbotek.entity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 
 @Entity
 @Table(name = "employees")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Employee {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column (name = "first_name")
+    @Column(name = "first_name")
     private String firstName;
 
-    @Column (name = "last_name")
+    @Column(name = "last_name")
     private String lastName;
 
     @Column(name = "passport_series")
@@ -27,12 +22,78 @@ public class Employee {
     @Column(name = "passport_number")
     private String passportNumber;
 
-    @Column(name = "salary")
     private String salary;
 
-    @Column(name ="employee_position")
+    @Column(name = "employee_position")
     private String employeePosition;
 
+    public Employee() {
+    }
 
+    public Employee(Long id, String firstName, String lastName, String passportSeries,
+                    String passportNumber, String salary, String employeePosition) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.passportSeries = passportSeries;
+        this.passportNumber = passportNumber;
+        this.salary = salary;
+        this.employeePosition = employeePosition;
+    }
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getPassportSeries() {
+        return passportSeries;
+    }
+
+    public void setPassportSeries(String passportSeries) {
+        this.passportSeries = passportSeries;
+    }
+
+    public String getPassportNumber() {
+        return passportNumber;
+    }
+
+    public void setPassportNumber(String passportNumber) {
+        this.passportNumber = passportNumber;
+    }
+
+    public String getSalary() {
+        return salary;
+    }
+
+    public void setSalary(String salary) {
+        this.salary = salary;
+    }
+
+    public String getEmployeePosition() {
+        return employeePosition;
+    }
+
+    public void setEmployeePosition(String employeePosition) {
+        this.employeePosition = employeePosition;
+    }
 }

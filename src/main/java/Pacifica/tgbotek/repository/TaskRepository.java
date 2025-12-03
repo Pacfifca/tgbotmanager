@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 @Repository
-interface TaskRepository extends JpaRepository<Task, Long> {
+public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByRelevance(Boolean relevance);
     List<Task> findByCreatorId(Long employeeId);
 }

@@ -1,5 +1,8 @@
 package Pacifica.tgbotek;
-
+import Pacifica.tgbotek.service.EmployeeService;
+import Pacifica.tgbotek.service.TaskService;
+import Pacifica.tgbotek.service.FileService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
@@ -15,20 +18,34 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
-
 import java.util.ArrayList;
 import java.util.List;
+import jakarta.annotation.PostConstruct;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Component
 public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
 
+    private final EmployeeService employeeService;
+    private final TaskService taskService;
+    private final FileService fileService;
 
-private final TelegramClient telegramClient;
+    @Value("${telegram.bot.token:8333041202:AAHQNO2U8ejaB-_c8P86XysLyuT2seGLEuA")
+    private String botToken;
 
-    public UpdateConsumer() {
-        this.telegramClient = new OkHttpTelegramClient("8333041202:AAHQNO2U8ejaB-_c8P86XysLyuT2seGLEuA");
+    private TelegramClient telegramClient;
+
+    public UpdateConsumer(EmployeeService employeeService, TaskService taskService, FileService fileService) {
+        this.employeeService = employeeService;
+        this.taskService = taskService;
+        this.fileService = fileService;
     }
+
+    @PostConstruct
+    private void init() {
+        this.telegramClient = new OkHttpTelegramClient(botToken);
+    }
+
 
 
     @Override
@@ -99,18 +116,42 @@ private final TelegramClient telegramClient;
 
 
     private void sendFilesList(Long chatId) {
-        sendMessage(chatId, "присылаю список файлов...");
-
-
+        try {
+            sendMessage(chatId, "присылаю список файлов...");
+            var files = fileService.getAllFiles();
+            String formattedList = fileService.formatFilesList(files);
+            sendMessage(chatId, formattedList);
+        } catch (Exception e) {
+            sendMessage(chatId, "Ошибка получения списка файлов" + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private void sendTaskList(Long chatId) {
-        sendMessage(chatId, "присылаю список задач...");
+        try {
+            sendMessage(chatId, "присылаю список задач...");
+            var tasks = taskService.getRelevantTasks();
+            String formattedList = taskService.formatTasksList(tasks);
+            sendMessage(chatId, formattedList);
+        } catch (Exception e){
+            sendMessage(chatId, "Ошибка получения списка задач" + e.getMessage());
+            e.printStackTrace();
+        }
+
 
     }
 
     private void sendEmployeesList(Long chatId) {
-        sendMessage(chatId,"прислыаю список сотрудиков...");
+        try {
+            sendMessage(chatId, "прислыаю список сотрудиков...");
+            var employees = employeeService.getAllEmployees();
+            String formattedList = employeeService.formatEmployeeList(employees);
+            sendMessage(chatId, formattedList);
+        } catch (Exception e){
+            sendMessage(chatId,"Ошибка получения списка сотрудников");
+            e.printStackTrace();
+
+        }
 
     }
 
@@ -154,7 +195,6 @@ private final TelegramClient telegramClient;
         );
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup(keyboardRows);
-
         message.setReplyMarkup(markup);
 
         try {

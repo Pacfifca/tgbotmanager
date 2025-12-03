@@ -1,16 +1,18 @@
 package Pacifica.tgbotek.service;
 import Pacifica.tgbotek.entity.Employee;
 import Pacifica.tgbotek.repository.EmployeeRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
+
+    public EmployeeService(EmployeeRepository employeeRepository) {
+        this.employeeRepository = employeeRepository;
+    }
 
 
     public List<Employee> getAllEmployees() {
