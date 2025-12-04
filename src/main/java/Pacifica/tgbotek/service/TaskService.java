@@ -1,5 +1,7 @@
 package Pacifica.tgbotek.service;
+import Pacifica.tgbotek.entity.Employee;
 import Pacifica.tgbotek.entity.Task;
+import Pacifica.tgbotek.repository.EmployeeRepository;
 import Pacifica.tgbotek.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -8,9 +10,11 @@ import java.util.List;
 public class TaskService {
 
     private final TaskRepository taskRepository;
+    private final EmployeeRepository employeeRepository;
 
-    public TaskService(TaskRepository taskRepository) {
+    public TaskService(TaskRepository taskRepository, EmployeeRepository employeeRepository) {
         this.taskRepository = taskRepository;
+        this.employeeRepository = employeeRepository;
     }
 
 
@@ -33,12 +37,32 @@ public class TaskService {
         for (Task task : tasks){
             sb.append(String.format("%d. задача %s\n",counter++,task.getTitle()));
             sb.append(String.format("Описание %s\n",task.getDescription() != null ? task.getDescription():"Нет описания"));
-            sb.append(String.format("ID создателя %s\n",task.getCreatorId() !=null ? task.getCreatorId():"-"));
+            String creatorName = getEmployeeName(task.getCreatorId());
+            sb.append(String.format("Создатель: %s\n", creatorName));
             sb.append(String.format("Срок %s\n ",task.getDueDate() != null ? task.getDueDate(): "не указан"));
-            sb.append(String.format("%s Актуальность %s\n", task.getRelevance() != null && task.getRelevance() ? "актуальна" : "не актуальна" ));
+            sb.append(String.format("Актуальность %s\n", task.getRelevance() != null && task.getRelevance() ? "актуальна" : "не актуальна" ));
             sb.append("\n");
         }
     return sb.toString();
     }
+    private String getEmployeeName(Integer employeeId) {
+        if (employeeId == null) {
+            return "Не указан";
+        }
 
+        try {
+            // Преобразуем Integer в Long для findById
+            Long employeeIdLong = employeeId.longValue();
+            Employee employee = employeeRepository.findById(employeeIdLong).orElse(null);
+
+            if (employee != null) {
+                // Возвращаем фамилию и имя
+                return employee.getLastName() + " " + employee.getFirstName();
+            } else {
+                return "Сотрудник не найден (ID: " + employeeId + ")";
+            }
+        } catch (Exception e) {
+            return "Ошибка получения данных (ID: " + employeeId + ")";
+        }
+    }
 }

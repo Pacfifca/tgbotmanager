@@ -9,6 +9,7 @@ public class tgmain implements SpringLongPollingBot {
 
     private final UpdateConsumer UpdateConsumer;
 
+
     public tgmain(UpdateConsumer updateConsumer) {
         UpdateConsumer = updateConsumer;
     }

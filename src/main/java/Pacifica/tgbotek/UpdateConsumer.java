@@ -13,6 +13,7 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
@@ -30,7 +31,7 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
     private final TaskService taskService;
     private final FileService fileService;
 
-    @Value("${telegram.bot.token:8333041202:AAHQNO2U8ejaB-_c8P86XysLyuT2seGLEuA")
+    @Value("${telegram.bot.token}")
     private String botToken;
 
     private TelegramClient telegramClient;
@@ -47,21 +48,21 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
     }
 
 
-
     @Override
     public void consume(Update update) {
 
-        if (update.hasMessage()){
+        if (update.hasMessage()) {
             String messageText = update.getMessage().getText();
             Long chatId = update.getMessage().getChatId();
 
             if (messageText.equals("/start") || messageText.equals("начать")) {
                 sendMainMenu(chatId);
+                sendReplyKeyboard(chatId);
             } else {
-                sendMessage(chatId,"Не понял, напиши начать");
+                sendMessage(chatId, "Используйте кнопку ниже для открытия меню");
                 sendReplyKeyboard(chatId);
             }
-        } else if (update.hasCallbackQuery()){
+        } else if (update.hasCallbackQuery()) {
             handleCallbackQuery(update.getCallbackQuery());
         }
     }
@@ -72,10 +73,12 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
                 .build();
 
         List<KeyboardRow> keyboardRows = new ArrayList<>();
-        KeyboardRow row1 = new KeyboardRow ("начать");
+        KeyboardRow row1 = new KeyboardRow("начать");
         keyboardRows.add(row1);
 
         ReplyKeyboardMarkup markup = new ReplyKeyboardMarkup(keyboardRows);
+        markup.setResizeKeyboard(true);
+        markup.setOneTimeKeyboard(true);
         message.setReplyMarkup(markup);
 
         try {
@@ -89,19 +92,18 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
         var data = callbackQuery.getData();
         var chatId = callbackQuery.getFrom().getId();
         var user = callbackQuery.getFrom();
-        switch(data){
+        switch (data) {
             case "my_name" -> sendMyName(chatId, user);
-            case "showEmployeeLst" -> sendEmployeesList(chatId);
+            case "showEmployeeList" -> sendEmployeesList(chatId);
             case "showTasksList" -> sendTaskList(chatId);
             case "getFilesList" -> sendFilesList(chatId);
             default -> sendMessage(chatId, "Неизвестная комманда");
         }
 
 
-
     }
 
-    private void sendMessage(Long chatId, String messageText){
+    private void sendMessage(Long chatId, String messageText) {
         SendMessage message = SendMessage.builder()
                 .text(messageText)
                 .chatId(chatId)
@@ -133,7 +135,7 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
             var tasks = taskService.getRelevantTasks();
             String formattedList = taskService.formatTasksList(tasks);
             sendMessage(chatId, formattedList);
-        } catch (Exception e){
+        } catch (Exception e) {
             sendMessage(chatId, "Ошибка получения списка задач" + e.getMessage());
             e.printStackTrace();
         }
@@ -147,8 +149,8 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
             var employees = employeeService.getAllEmployees();
             String formattedList = employeeService.formatEmployeeList(employees);
             sendMessage(chatId, formattedList);
-        } catch (Exception e){
-            sendMessage(chatId,"Ошибка получения списка сотрудников");
+        } catch (Exception e) {
+            sendMessage(chatId, "Ошибка получения списка сотрудников");
             e.printStackTrace();
 
         }
@@ -158,7 +160,7 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
     private void sendMyName(Long chatId, User user) {
         var text = "ПРОФИЛЬ:\n\nВаше имя: %s\nВаш ник: @%s"
                 .formatted(
-                        user.getFirstName()+ " " + user.getLastName(),
+                        user.getFirstName() + " " + user.getLastName(),
                         user.getUserName()
                 );
         sendMessage(chatId, text);
@@ -201,6 +203,23 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
             telegramClient.execute(message);
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
+        }
+        removeReplyKeyboard(chatId);
+    }
+
+    private void removeReplyKeyboard(Long chatId) {
+        SendMessage message = SendMessage.builder()
+                .text(" ")  // можно оставить пустое сообщение
+                .chatId(chatId)
+                .replyMarkup(ReplyKeyboardRemove.builder()
+                        .removeKeyboard(true)
+                        .build())
+                .build();
+
+        try {
+            telegramClient.execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
         }
     }
 }

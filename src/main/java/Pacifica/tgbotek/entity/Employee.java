@@ -1,6 +1,8 @@
 package Pacifica.tgbotek.entity;
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
+
 
 @Entity
 @Table(name = "employees")
@@ -8,7 +10,7 @@ public class Employee {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @Column(name = "first_name")
     private String firstName;
@@ -22,7 +24,9 @@ public class Employee {
     @Column(name = "passport_number")
     private String passportNumber;
 
-    private String salary;
+
+    @Column(name ="salary")
+    private Integer salary;
 
     @Column(name = "employee_position")
     private String employeePosition;
@@ -30,8 +34,8 @@ public class Employee {
     public Employee() {
     }
 
-    public Employee(Long id, String firstName, String lastName, String passportSeries,
-                    String passportNumber, String salary, String employeePosition) {
+    public Employee(Integer id, String firstName, String lastName, String passportSeries,
+                    String passportNumber, Integer salary, String employeePosition) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -41,11 +45,11 @@ public class Employee {
         this.employeePosition = employeePosition;
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -81,11 +85,11 @@ public class Employee {
         this.passportNumber = passportNumber;
     }
 
-    public String getSalary() {
+    public Integer getSalary() {
         return salary;
     }
 
-    public void setSalary(String salary) {
+    public void setSalary(Integer salary) {
         this.salary = salary;
     }
 

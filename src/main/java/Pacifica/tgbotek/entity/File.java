@@ -9,18 +9,18 @@ public class File {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @Column(name = "decision_id")
     private Integer decisionId;
 
-    @Column(name = "file_path")
+    @Column(name = "filepath")
     private String filePath;
 
     @Column(name = "uploaded_by")
-    private Long uploadedBy;
+    private Integer uploadedBy;
 
-    @Column(name = "uploaded_date")
+    @Column(name = "uploaded_at")
     private Instant uploadedAt;
 
     // Конструктор без параметров
@@ -28,8 +28,8 @@ public class File {
     }
 
     // Конструктор со всеми параметрами
-    public File(Long id, Integer decisionId, String filePath,
-                      Long uploadedBy, Instant uploadedAt) {
+    public File(Integer id, Integer decisionId, String filePath,
+                Integer uploadedBy, Instant uploadedAt) {
         this.id = id;
         this.decisionId = decisionId;
         this.filePath = filePath;
@@ -38,11 +38,11 @@ public class File {
     }
 
     // Геттеры и сеттеры
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -62,11 +62,11 @@ public class File {
         this.filePath = filePath;
     }
 
-    public Long getUploadedBy() {
+    public Integer getUploadedBy() {
         return uploadedBy;
     }
 
-    public void setUploadedBy(Long uploadedBy) {
+    public void setUploadedBy(Integer uploadedBy) {
         this.uploadedBy = uploadedBy;
     }
 
@@ -77,4 +77,13 @@ public class File {
     public void setUploadedAt(Instant uploadedAt) {
         this.uploadedAt = uploadedAt;
     }
+
+    public String getFileName() {
+        if (filePath != null && filePath.contains("/")) {
+            return filePath.substring(filePath.lastIndexOf("/") + 1);
+        }
+        return filePath;
+    }
+
+
 }

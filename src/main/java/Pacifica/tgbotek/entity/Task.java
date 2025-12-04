@@ -1,6 +1,8 @@
 package Pacifica.tgbotek.entity;
 
 import jakarta.persistence.*;
+
+import java.time.Duration;
 import java.time.Instant;
 
 @Entity
@@ -9,7 +11,7 @@ public class Task {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     private String title;
 
@@ -21,17 +23,16 @@ public class Task {
     @Column(name = "created_at")
     private Instant createdAt;
 
-    @Column(name = "due_date")
+    @Column(name = "due_date",nullable = false)
     private String dueDate;
 
     private Boolean relevance;
 
-    // Конструктор без параметров (обязателен для JPA)
     public Task() {
     }
 
     // Конструктор со всеми параметрами
-    public Task(Long id, String title, String description, Integer creatorId,
+    public Task(Integer id, String title, String description, Integer creatorId,
                 Instant createdAt, String dueDate, Boolean relevance) {
         this.id = id;
         this.title = title;
@@ -43,11 +44,11 @@ public class Task {
     }
 
     // Геттеры и сеттеры
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
