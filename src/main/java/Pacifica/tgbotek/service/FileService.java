@@ -32,7 +32,7 @@ public class FileService {
         StringBuilder sb = new StringBuilder("Список файлов:\n\n");
         int counter = 1;
         for (File file : files){
-            sb.append(String.format("%d\n\nID файла: %d\n",counter++,file.getId()));
+            sb.append(String.format("%d\nID файла: %d\n",counter++,file.getId()));
             sb.append(String.format("Путь к файлу: %s\n",file.getFilePath()!= null ? file.getFilePath() : "не указан"));
             sb.append(String.format("ID Решения: %s\n",file.getDecisionId() != null ? file.getDecisionId() : "-"));
             String uploaderName = getEmployeeLastName(file.getUploadedBy());

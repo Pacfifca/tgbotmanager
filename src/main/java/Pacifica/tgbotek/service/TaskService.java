@@ -32,7 +32,7 @@ public class TaskService {
             return "Список задач пуст";
         }
 
-        StringBuilder sb = new StringBuilder("Список задач");
+        StringBuilder sb = new StringBuilder("Список задач\n");
         int counter = 1;
         for (Task task : tasks){
             sb.append(String.format("%d. задача %s\n",counter++,task.getTitle()));

@@ -35,6 +35,8 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
     private final AttachmentService attachmentService;
     private final NotificationService notificationService;
     private final TimeLogService timeLogService;
+    private final TaskDependencyService taskDependencyService;
+    private final AnalyticsService analyticsService;
 
     @Value("${telegram.bot.token}")
     private String botToken;
@@ -49,7 +51,9 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
                           CommentService commentService,
                           AttachmentService attachmentService,
                           NotificationService notificationService,
-                          TimeLogService timeLogService) {
+                          TimeLogService timeLogService,
+                          TaskDependencyService taskDependencyService,
+                          AnalyticsService analyticsService) {
         this.employeeService = employeeService;
         this.taskService = taskService;
         this.fileService = fileService;
@@ -59,6 +63,8 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
         this.attachmentService = attachmentService;
         this.notificationService = notificationService;
         this.timeLogService = timeLogService;
+        this.taskDependencyService = taskDependencyService;
+        this.analyticsService = analyticsService;
     }
 
     @PostConstruct
@@ -74,11 +80,11 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
             String messageText = update.getMessage().getText();
             Long chatId = update.getMessage().getChatId();
 
-            if (messageText.equals("/start") || messageText.equals("начать")) {
+            if (messageText.equals("/start") || messageText.equals("меню")) {
                 sendMainMenu(chatId);
                 sendReplyKeyboard(chatId);
             } else {
-                sendMessage(chatId, "Используйте кнопку ниже для открытия меню");
+                sendMessage(chatId, "Нажми на старт или напиши меню");
                 sendReplyKeyboard(chatId);
             }
         } else if (update.hasCallbackQuery()) {
@@ -92,13 +98,14 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
                 .build();
 
         List<KeyboardRow> keyboardRows = new ArrayList<>();
-        KeyboardRow row1 = new KeyboardRow("начать");
+        KeyboardRow row1 = new KeyboardRow("меню");
         keyboardRows.add(row1);
 
         ReplyKeyboardMarkup markup = new ReplyKeyboardMarkup(keyboardRows);
         markup.setResizeKeyboard(true);
-        markup.setOneTimeKeyboard(true);
+        markup.setOneTimeKeyboard(false);
         message.setReplyMarkup(markup);
+        markup.setSelective(true);
 
         try {
             telegramClient.execute(message);
@@ -122,6 +129,12 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
             case "showAttachments" -> sendAttachmentsList(chatId);
             case "showNotifications" -> sendNotificationsList(chatId);
             case "showTimeLogs" -> sendTimeLogsList(chatId);
+            case "showDependencies" -> sendDependenciesList(chatId);
+            case "analytics" -> sendAnalyticsMenu(chatId);
+            case "analytics_tasks" -> sendTaskStatistics(chatId);
+            case "analytics_top" -> sendTopEmployees(chatId);
+            case "analytics_deps" -> sendDependencyAnalysis(chatId);
+            case "back_to_main" -> sendMainMenu(chatId);
             default -> sendMessage(chatId, "Неизвестная комманда");
         }
 
@@ -164,8 +177,6 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
             sendMessage(chatId, "Ошибка получения списка задач" + e.getMessage());
             e.printStackTrace();
         }
-
-
     }
 
     private void sendEmployeesList(Long chatId) {
@@ -245,12 +256,59 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
     private void sendTimeLogsList(Long chatId) {
         try {
             sendMessage(chatId, " Присылаю список учета времени...");
-            // Для примера берем записи времени для сотрудника с ID=1
             var timeLogs = timeLogService.getAllTimeLogs();
             String formattedList = timeLogService.formatTimeLogsList(timeLogs);
             sendMessage(chatId, formattedList);
         } catch (Exception e) {
             sendMessage(chatId, " Ошибка получения списка учета времени: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void sendDependenciesList(Long chatId) {
+        try {
+            sendMessage(chatId, " Загружаю зависимости задач...");
+
+            var dependencies = taskDependencyService.getAllDependencies();
+            String formattedList = taskDependencyService.formatDependenciesList(dependencies);
+            sendMessage(chatId, formattedList);
+        } catch (Exception e) {
+            sendMessage(chatId, " Ошибка при получении зависимостей: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void sendTaskStatistics(Long chatId) {
+        try {
+            sendMessage(chatId, " Формирую статистику задач...");
+            String stats = analyticsService.getTaskStatisticsByMonth();
+            sendMessage(chatId, stats);
+        } catch (Exception e) {
+            sendMessage(chatId, " Ошибка при получении статистики: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+
+    private void sendTopEmployees(Long chatId) {
+        try {
+            sendMessage(chatId, " Формирую рейтинг сотрудников...");
+            String stats = analyticsService.getTopActiveEmployees();
+            sendMessage(chatId, stats);
+        } catch (Exception e) {
+            sendMessage(chatId, " Ошибка: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+
+    private void sendDependencyAnalysis(Long chatId) {
+        try {
+            sendMessage(chatId, " Анализирую зависимости...");
+            String stats = analyticsService.getTaskDependenciesAnalysis();
+            sendMessage(chatId, stats);
+        } catch (Exception e) {
+            sendMessage(chatId, " Ошибка: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -313,7 +371,11 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
                 .build();
         var button11 = InlineKeyboardButton.builder()
                 .text(" Зависимости")
-                .callbackData("showTaskDependencies")
+                .callbackData("showDependencies")
+                .build();
+        var button12 = InlineKeyboardButton.builder()
+                .text(" Аналитика")
+                .callbackData("analytics")
                 .build();
 
         List<InlineKeyboardRow> keyboardRows = List.of(
@@ -327,7 +389,8 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
                 new InlineKeyboardRow(button8),
                 new InlineKeyboardRow(button9),
                 new InlineKeyboardRow(button10),
-                new InlineKeyboardRow(button11)
+                new InlineKeyboardRow(button11),
+                new InlineKeyboardRow(button12)
 
 
         );
@@ -340,22 +403,46 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
-        removeReplyKeyboard(chatId);
     }
 
-    private void removeReplyKeyboard(Long chatId) {
+    private void sendAnalyticsMenu(Long chatId) {
         SendMessage message = SendMessage.builder()
-                .text(" ")  // можно оставить пустое сообщение
+                .text(" АНАЛИТИКА - Выберите отчёт:")
                 .chatId(chatId)
-                .replyMarkup(ReplyKeyboardRemove.builder()
-                        .removeKeyboard(true)
-                        .build())
                 .build();
+
+        var button1 = InlineKeyboardButton.builder()
+                .text(" Статистика задач")
+                .callbackData("analytics_tasks")
+                .build();
+        var button3 = InlineKeyboardButton.builder()
+                .text(" Топ сотрудников")
+                .callbackData("analytics_top")
+                .build();
+        var button4 = InlineKeyboardButton.builder()
+                .text(" Анализ зависимостей")
+                .callbackData("analytics_deps")
+                .build();
+        var button6 = InlineKeyboardButton.builder()
+                .text(" Назад в главное меню")
+                .callbackData("back_to_main")
+                .build();
+
+        List<InlineKeyboardRow> keyboardRows = List.of(
+                new InlineKeyboardRow(button1),
+                new InlineKeyboardRow(button3),
+                new InlineKeyboardRow(button4),
+                new InlineKeyboardRow(button6)
+        );
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup(keyboardRows);
+        message.setReplyMarkup(markup);
 
         try {
             telegramClient.execute(message);
         } catch (TelegramApiException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
+
 }
