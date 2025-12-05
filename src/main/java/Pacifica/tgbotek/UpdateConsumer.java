@@ -1,7 +1,6 @@
 package Pacifica.tgbotek;
-import Pacifica.tgbotek.service.EmployeeService;
-import Pacifica.tgbotek.service.TaskService;
-import Pacifica.tgbotek.service.FileService;
+import Pacifica.tgbotek.service.*;
+import Pacifica.tgbotek.service.DepartmentService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
@@ -30,16 +29,36 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
     private final EmployeeService employeeService;
     private final TaskService taskService;
     private final FileService fileService;
+    private final DepartmentService departmentService;
+    private final ProjectService projectService;
+    private final CommentService commentService;
+    private final AttachmentService attachmentService;
+    private final NotificationService notificationService;
+    private final TimeLogService timeLogService;
 
     @Value("${telegram.bot.token}")
     private String botToken;
 
     private TelegramClient telegramClient;
 
-    public UpdateConsumer(EmployeeService employeeService, TaskService taskService, FileService fileService) {
+    public UpdateConsumer(EmployeeService employeeService,
+                          TaskService taskService,
+                          FileService fileService,
+                          DepartmentService departmentService,
+                          ProjectService projectService,
+                          CommentService commentService,
+                          AttachmentService attachmentService,
+                          NotificationService notificationService,
+                          TimeLogService timeLogService) {
         this.employeeService = employeeService;
         this.taskService = taskService;
         this.fileService = fileService;
+        this.departmentService = departmentService;
+        this.projectService = projectService;
+        this.commentService = commentService;
+        this.attachmentService = attachmentService;
+        this.notificationService = notificationService;
+        this.timeLogService = timeLogService;
     }
 
     @PostConstruct
@@ -97,6 +116,12 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
             case "showEmployeeList" -> sendEmployeesList(chatId);
             case "showTasksList" -> sendTaskList(chatId);
             case "getFilesList" -> sendFilesList(chatId);
+            case "showDepartments" -> sendDepartmentsList(chatId);
+            case "showProjects" -> sendProjectsList(chatId);
+            case "showComments" -> sendCommentsList(chatId);
+            case "showAttachments" -> sendAttachmentsList(chatId);
+            case "showNotifications" -> sendNotificationsList(chatId);
+            case "showTimeLogs" -> sendTimeLogsList(chatId);
             default -> sendMessage(chatId, "Неизвестная комманда");
         }
 
@@ -157,6 +182,80 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
 
     }
 
+    private void sendDepartmentsList(Long chatId) {
+        try {
+            sendMessage(chatId, "Присылаю список отделов...");
+            var departments = departmentService.getAllDepartments();
+            String formattedList = departmentService.formatDepartmentList(departments);
+            sendMessage(chatId, formattedList);
+        } catch (Exception e) {
+            sendMessage(chatId, "Ошибка получения списка отделов: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void sendProjectsList(Long chatId) {
+        try {
+            sendMessage(chatId, "Присылаю список проектов...");
+            var projects = projectService.getAllProjects();
+            String formattedList = projectService.formatProjectsList(projects);
+            sendMessage(chatId, formattedList);
+        } catch (Exception e) {
+            sendMessage(chatId, "Ошибка получения списка проектов: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void sendCommentsList(Long chatId) {
+        try {
+            sendMessage(chatId, " Присылаю список комментариев...");
+            var comments = commentService.getAllComments();
+            String formattedList = commentService.formatCommentsList(comments);
+            sendMessage(chatId, formattedList);
+        } catch (Exception e) {
+            sendMessage(chatId, " Ошибка получения списка комментариев: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void sendAttachmentsList(Long chatId) {
+        try {
+            sendMessage(chatId, " Присылаю список вложений...");
+            var attachments = attachmentService.getAllAttachments();
+            String formattedList = attachmentService.formatAttachmentsList(attachments);
+            sendMessage(chatId, formattedList);
+        } catch (Exception e) {
+            sendMessage(chatId, " Ошибка получения списка вложений: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void sendNotificationsList(Long chatId) {
+        try {
+            sendMessage(chatId, " Присылаю список уведомлений...");
+            var notifications = notificationService.getAllNotifications();
+            String formattedList = notificationService.formatNotificationsList(notifications);
+            sendMessage(chatId, formattedList);
+        } catch (Exception e) {
+            sendMessage(chatId, " Ошибка получения списка уведомлений: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void sendTimeLogsList(Long chatId) {
+        try {
+            sendMessage(chatId, " Присылаю список учета времени...");
+            // Для примера берем записи времени для сотрудника с ID=1
+            var timeLogs = timeLogService.getAllTimeLogs();
+            String formattedList = timeLogService.formatTimeLogsList(timeLogs);
+            sendMessage(chatId, formattedList);
+        } catch (Exception e) {
+            sendMessage(chatId, " Ошибка получения списка учета времени: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+
     private void sendMyName(Long chatId, User user) {
         var text = "ПРОФИЛЬ:\n\nВаше имя: %s\nВаш ник: @%s"
                 .formatted(
@@ -188,12 +287,49 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
                 .text("мой профиль")
                 .callbackData("my_name")
                 .build();
+        var button5 = InlineKeyboardButton.builder()
+                .text("Отделы")
+                .callbackData("showDepartments")
+                .build();
+        var button6 = InlineKeyboardButton.builder()
+                .text(" Проекты")
+                .callbackData("showProjects")
+                .build();
+        var button7 = InlineKeyboardButton.builder()
+                .text("Комментарии")
+                .callbackData("showComments")
+                .build();
+        var button8 = InlineKeyboardButton.builder()
+                .text(" Вложения")
+                .callbackData("showAttachments")
+                .build();
+        var button9 = InlineKeyboardButton.builder()
+                .text(" Уведомления")
+                .callbackData("showNotifications")
+                .build();
+        var button10 = InlineKeyboardButton.builder()
+                .text(" Учет времени")
+                .callbackData("showTimeLogs")
+                .build();
+        var button11 = InlineKeyboardButton.builder()
+                .text(" Зависимости")
+                .callbackData("showTaskDependencies")
+                .build();
 
         List<InlineKeyboardRow> keyboardRows = List.of(
                 new InlineKeyboardRow(button1),
                 new InlineKeyboardRow(button2),
                 new InlineKeyboardRow(button3),
-                new InlineKeyboardRow(button4)
+                new InlineKeyboardRow(button4),
+                new InlineKeyboardRow(button5),
+                new InlineKeyboardRow(button6),
+                new InlineKeyboardRow(button7),
+                new InlineKeyboardRow(button8),
+                new InlineKeyboardRow(button9),
+                new InlineKeyboardRow(button10),
+                new InlineKeyboardRow(button11)
+
+
         );
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup(keyboardRows);

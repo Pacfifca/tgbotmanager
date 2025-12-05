@@ -31,7 +31,6 @@ public class Task {
     public Task() {
     }
 
-    // Конструктор со всеми параметрами
     public Task(Integer id, String title, String description, Integer creatorId,
                 Instant createdAt, String dueDate, Boolean relevance) {
         this.id = id;
@@ -43,7 +42,6 @@ public class Task {
         this.relevance = relevance;
     }
 
-    // Геттеры и сеттеры
     public Integer getId() {
         return id;
     }

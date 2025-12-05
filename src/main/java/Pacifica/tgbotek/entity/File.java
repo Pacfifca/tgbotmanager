@@ -23,11 +23,9 @@ public class File {
     @Column(name = "uploaded_at")
     private Instant uploadedAt;
 
-    // Конструктор без параметров
     public File() {
     }
 
-    // Конструктор со всеми параметрами
     public File(Integer id, Integer decisionId, String filePath,
                 Integer uploadedBy, Instant uploadedAt) {
         this.id = id;
@@ -37,7 +35,6 @@ public class File {
         this.uploadedAt = uploadedAt;
     }
 
-    // Геттеры и сеттеры
     public Integer getId() {
         return id;
     }

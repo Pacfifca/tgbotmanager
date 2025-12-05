@@ -51,12 +51,9 @@ public class TaskService {
         }
 
         try {
-            // Преобразуем Integer в Long для findById
             Long employeeIdLong = employeeId.longValue();
             Employee employee = employeeRepository.findById(employeeIdLong).orElse(null);
-
             if (employee != null) {
-                // Возвращаем фамилию и имя
                 return employee.getLastName() + " " + employee.getFirstName();
             } else {
                 return "Сотрудник не найден (ID: " + employeeId + ")";
