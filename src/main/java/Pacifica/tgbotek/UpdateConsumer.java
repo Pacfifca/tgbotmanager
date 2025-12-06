@@ -19,8 +19,11 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import jakarta.annotation.PostConstruct;
+
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Component
@@ -42,6 +45,8 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
     private String botToken;
 
     private TelegramClient telegramClient;
+
+    /*private final Map<Long, TaskCreationState> taskCreationStates = new HashMap<>();*/
 
     public UpdateConsumer(EmployeeService employeeService,
                           TaskService taskService,
@@ -76,9 +81,14 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
     @Override
     public void consume(Update update) {
 
-        if (update.hasMessage()) {
+        if (update.hasMessage() && update.getMessage().hasText()) {
             String messageText = update.getMessage().getText();
             Long chatId = update.getMessage().getChatId();
+
+            /*if (taskCreationStates.containsKey(chatId)) {
+                handleTaskCreation(chatId, messageText);
+                return;
+            }*/
 
             if (messageText.equals("/start") || messageText.equals("меню")) {
                 sendMainMenu(chatId);
@@ -127,6 +137,7 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
             case "showProjects" -> sendProjectsList(chatId);
             case "showComments" -> sendCommentsList(chatId);
             case "showAttachments" -> sendAttachmentsList(chatId);
+            //case "createTask" -> startTaskCreation(chatId);
             case "showNotifications" -> sendNotificationsList(chatId);
             case "showTimeLogs" -> sendTimeLogsList(chatId);
             case "showDependencies" -> sendDependenciesList(chatId);
@@ -241,6 +252,69 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
         }
     }
 
+    /*private void startTaskCreation(Long chatId) {
+        TaskCreationState state = new TaskCreationState();
+        taskCreationStates.put(chatId, state);
+        sendMessage(chatId, " создание новой задачи\n\nВведите название задачи:");
+    }*/
+
+
+    /*private void handleTaskCreation(Long chatId, String messageText) {
+        TaskCreationState state = taskCreationStates.get(chatId);
+
+        if (state.title == null) {
+            state.title = messageText;
+            sendMessage(chatId, "Отлично! Теперь введите описание задачи:");
+        } else if (state.description == null) {
+            state.description = messageText;
+            sendMessage(chatId, "Введите ID создателя (номер сотрудника):");
+        } else if (state.creatorId == null) {
+            try {
+                state.creatorId = Integer.parseInt(messageText);
+                sendMessage(chatId, "Введите срок выполнения (формат: YYYY-MM-DD, например: 2025-12-31):");
+            } catch (NumberFormatException e) {
+                sendMessage(chatId, "Ошибка! Введите корректный номер сотрудника:");
+            }
+        } else if (state.dueDate == null) {
+            state.dueDate = messageText;
+
+            try {
+                var task = taskService.createTask(
+                        state.title,
+                        state.description,
+                        state.creatorId,
+                        Integer.valueOf(state.dueDate),
+                        true
+                );
+
+                sendMessage(chatId, String.format(
+                        " Задача успешно создана!\n\n" +
+                                " Название: %s\n" +
+                                " Описание: %s\n" +
+                                " Создатель ID: %d\n" +
+                                " Срок: %s\n\n" +
+                                " Триггер автоматически проверит срок и создаст уведомление при необходимости!",
+                        task.getTitle(),
+                        task.getDescription(),
+                        task.getCreatorId(),
+                        task.getDueDate()
+                ));
+
+                taskCreationStates.remove(chatId);
+                sendMainMenu(chatId);
+            } catch (Exception e) {
+                sendMessage(chatId, " Ошибка при создании задачи: " + e.getMessage());
+                taskCreationStates.remove(chatId);
+            }
+        }
+    */
+    private static class TaskCreationState {
+        String title;
+        String description;
+        Integer creatorId;
+        String dueDate;
+    }
+
     private void sendNotificationsList(Long chatId) {
         try {
             sendMessage(chatId, " Присылаю список уведомлений...");
@@ -315,11 +389,10 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
 
 
     private void sendMyName(Long chatId, User user) {
-        var text = "ПРОФИЛЬ:\n\nВаше имя: %s\nВаш ник: @%s"
-                .formatted(
-                        user.getFirstName() + " " + user.getLastName(),
-                        user.getUserName()
-                );
+        String lastName = user.getLastName() != null ? user.getLastName() : "Не указано";
+        String firstName = user.getFirstName() != null ? user.getFirstName() : "Не указано";
+        String text = "ПРОФИЛЬ:\n\nВаше имя: %s %s\nВаш ник: @%s".formatted
+                (firstName, lastName, user.getUserName() != null ? user.getUserName() : "Не указан");
         sendMessage(chatId, text);
     }
 
@@ -337,51 +410,56 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
                 .text("актуальные задачи")
                 .callbackData("showTasksList")
                 .build();
-        var button3 = InlineKeyboardButton.builder()
+        //var button3 = InlineKeyboardButton.builder()
+                //.text("+Создать задачу")
+                //.callbackData("createTask")
+                //.build();"""
+        var button4 = InlineKeyboardButton.builder()
                 .text("файлы")
                 .callbackData("getFilesList")
                 .build();
-        var button4 = InlineKeyboardButton.builder()
+        var button5 = InlineKeyboardButton.builder()
                 .text("мой профиль")
                 .callbackData("my_name")
                 .build();
-        var button5 = InlineKeyboardButton.builder()
+        var button6 = InlineKeyboardButton.builder()
                 .text("Отделы")
                 .callbackData("showDepartments")
                 .build();
-        var button6 = InlineKeyboardButton.builder()
+        var button7 = InlineKeyboardButton.builder()
                 .text(" Проекты")
                 .callbackData("showProjects")
                 .build();
-        var button7 = InlineKeyboardButton.builder()
+        var button8 = InlineKeyboardButton.builder()
                 .text("Комментарии")
                 .callbackData("showComments")
                 .build();
-        var button8 = InlineKeyboardButton.builder()
+        var button9 = InlineKeyboardButton.builder()
                 .text(" Вложения")
                 .callbackData("showAttachments")
                 .build();
-        var button9 = InlineKeyboardButton.builder()
+        var button10 = InlineKeyboardButton.builder()
                 .text(" Уведомления")
                 .callbackData("showNotifications")
                 .build();
-        var button10 = InlineKeyboardButton.builder()
+        var button11 = InlineKeyboardButton.builder()
                 .text(" Учет времени")
                 .callbackData("showTimeLogs")
                 .build();
-        var button11 = InlineKeyboardButton.builder()
+        var button12 = InlineKeyboardButton.builder()
                 .text(" Зависимости")
                 .callbackData("showDependencies")
                 .build();
-        var button12 = InlineKeyboardButton.builder()
+        var button13 = InlineKeyboardButton.builder()
                 .text(" Аналитика")
                 .callbackData("analytics")
                 .build();
 
+
         List<InlineKeyboardRow> keyboardRows = List.of(
                 new InlineKeyboardRow(button1),
                 new InlineKeyboardRow(button2),
-                new InlineKeyboardRow(button3),
+                //new InlineKeyboardRow(button3),
                 new InlineKeyboardRow(button4),
                 new InlineKeyboardRow(button5),
                 new InlineKeyboardRow(button6),
@@ -390,7 +468,8 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
                 new InlineKeyboardRow(button9),
                 new InlineKeyboardRow(button10),
                 new InlineKeyboardRow(button11),
-                new InlineKeyboardRow(button12)
+                new InlineKeyboardRow(button12),
+                new InlineKeyboardRow(button13)
 
 
         );

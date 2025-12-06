@@ -93,7 +93,7 @@ public class AnalyticsService {
             return " Нет данных за последние 3 месяца";
         }
 
-        StringBuilder sb = new StringBuilder("📊 СТАТИСТИКА ЗАДАЧ ПО МЕСЯЦАМ\n\n");
+        StringBuilder sb = new StringBuilder(" СТАТИСТИКА ЗАДАЧ ПО МЕСЯЦАМ\n\n");
 
         for (Object[] row : results) {
             sb.append("\n");
@@ -110,7 +110,7 @@ public class AnalyticsService {
 
     private String formatTopEmployees(List<Object[]> results) {
         if (results.isEmpty()) {
-            return "👥 Нет данных об активности сотрудников";
+            return " Нет данных об активности сотрудников";
         }
 
         StringBuilder sb = new StringBuilder(" ТОП-10 АКТИВНЫХ СОТРУДНИКОВ\n\n");
@@ -132,7 +132,7 @@ public class AnalyticsService {
             return "Нет данных о зависимостях задач";
         }
 
-        StringBuilder sb = new StringBuilder("🔗 АНАЛИЗ ЗАВИСИМОСТЕЙ ЗАДАЧ\n\n");
+        StringBuilder sb = new StringBuilder(" АНАЛИЗ ЗАВИСИМОСТЕЙ ЗАДАЧ\n\n");
 
         for (Object[] row : results) {
             sb.append("\n");

@@ -1,7 +1,6 @@
 package Pacifica.tgbotek.entity;
 import jakarta.persistence.*;
 
-import java.math.BigDecimal;
 
 
 @Entity

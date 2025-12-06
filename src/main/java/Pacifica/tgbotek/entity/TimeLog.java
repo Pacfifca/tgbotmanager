@@ -28,7 +28,6 @@ public class TimeLog {
 
     public TimeLog() {}
 
-    // Конструктор, геттеры и сеттеры
     public Integer getId() {
         return id;
     }
